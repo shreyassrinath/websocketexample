@@ -3,9 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/doneland/yquotes"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 var connections map[*websocket.Conn]bool
@@ -16,6 +19,11 @@ func sendAll(msg []byte) {
 			delete(connections, conn)
 			conn.Close()
 		}
+	}
+}
+func sendOne(msg []byte, conn *websocket.Conn) {
+	if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+		return
 	}
 }
 
@@ -31,17 +39,53 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Succesfully upgraded connection")
 	connections[conn] = true
+	stopLoop := make(chan string)
 
 	for {
 		// Blocks until a message is read
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
+			log.Println("Connection closed!")
 			delete(connections, conn)
 			conn.Close()
+			close(stopLoop)
 			return
 		}
-		log.Println(string(msg))
-		sendAll(msg)
+		log.Println("Stock to follow: ", string(msg))
+
+		sendOne([]byte(string(msg)+" is the stock to follow"), conn)
+		go func() {
+
+			for {
+				select {
+				default:
+					timer1 := time.NewTimer(time.Second * 1)
+					<-timer1.C
+					stock, err := yquotes.NewStock(string(msg), false)
+					if err != nil {
+						// handle error
+					}
+					symbol := stock.Symbol // AAPL
+					name := stock.Name     // Apple Inc.
+					// Price information
+					price := stock.Price // Price struct
+					bid := price.Bid
+					ask := price.Ask
+					// open := price.Open
+					// prevClose := price.PreviousClose
+					// last := price.Last
+					// date := price.Date
+					log.Println("Symbol ", symbol, " -Name ", name)
+					log.Println("Price:Bid ", bid)
+					sendOne([]byte("Price:Bid "+strconv.FormatFloat(bid, 'f', 6, 64)), conn)
+					log.Println("Price:Ask ", ask)
+					sendOne([]byte("Price:Ask "+strconv.FormatFloat(ask, 'f', 6, 64)), conn)
+
+				case <-stopLoop:
+					return
+				}
+			}
+		}()
 	}
 }
 
