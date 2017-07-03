@@ -1,0 +1,14 @@
+.ticker{
+    min-height: 540px
+    
+}
+
+.tile {
+    /*background-color: white;*/
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 20px;
+    position: relative;
+    text-align: center;
+
+}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/doneland/yquotes"
@@ -12,6 +13,17 @@ import (
 )
 
 var connections map[*websocket.Conn]bool
+
+type TickerInfo struct {
+	Ticker    string
+	Bid       string
+	Ask       string
+	Symbol    string
+	Open      string
+	Last      string
+	Date      string
+	PrevClose string
+}
 
 func sendAll(msg []byte) {
 	for conn := range connections {
@@ -39,7 +51,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Succesfully upgraded connection")
 	connections[conn] = true
-	stopLoop := make(chan string)
+	//stopLoop := make(chan string)
+	var stopLoop chan string
 
 	for {
 		// Blocks until a message is read
@@ -51,6 +64,11 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			close(stopLoop)
 			return
 		}
+		log.Println("stopLoop ", stopLoop)
+		if stopLoop != nil {
+			stopLoop <- ""
+		}
+		stopLoop = make(chan string)
 		log.Println("Stock to follow: ", string(msg))
 
 		sendOne([]byte(string(msg)+" is the stock to follow"), conn)
@@ -71,15 +89,19 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 					price := stock.Price // Price struct
 					bid := price.Bid
 					ask := price.Ask
-					// open := price.Open
-					// prevClose := price.PreviousClose
-					// last := price.Last
-					// date := price.Date
-					log.Println("Symbol ", symbol, " -Name ", name)
-					log.Println("Price:Bid ", bid)
-					sendOne([]byte("Price:Bid "+strconv.FormatFloat(bid, 'f', 6, 64)), conn)
-					log.Println("Price:Ask ", ask)
-					sendOne([]byte("Price:Ask "+strconv.FormatFloat(ask, 'f', 6, 64)), conn)
+					open := price.Open
+					prevClose := price.PreviousClose
+					last := price.Last
+					date := price.Date
+					tickerInfo := &TickerInfo{Ticker: name, Bid: strconv.FormatFloat(bid, 'f', 6, 64) + " (BID)", Ask: strconv.FormatFloat(ask, 'f', 6, 64) + " (ASK)", Symbol: symbol, Open: strconv.FormatFloat(open, 'f', 6, 64) + " (OPEN)", Last: strconv.FormatFloat(last, 'f', 6, 64) + " (LAST)", PrevClose: strconv.FormatFloat(prevClose, 'f', 6, 64) + " (Previous Close)", Date: date.Format(time.RFC3339)}
+					tInfo, _ := json.Marshal(tickerInfo)
+					sendOne([]byte(tInfo), conn)
+					// log.Println("Symbol ", symbol, " -Name ", name)
+					// sendOne([]byte("Symbol "+symbol+" -Name "+name), conn)
+					// log.Println("Price:Bid ", bid)
+					// sendOne([]byte("Price:Bid "+strconv.FormatFloat(bid, 'f', 6, 64)), conn)
+					// log.Println("Price:Ask ", ask)
+					// sendOne([]byte("Price:Ask "+strconv.FormatFloat(ask, 'f', 6, 64)), conn)
 
 				case <-stopLoop:
 					return
