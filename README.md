@@ -17,7 +17,7 @@ Some use cases of WebSockets are:
 * Chat
 * Etc..
 
-This project aims to use WebSockets for the financial tickers use case. When user browses to the app, a websocket connection is opened to the backend server. The server listens to the "ticker" request from the UI- the connection is kept open. When a ticker request comes in, a go routine is spawned and starts quering Yahoo for the stock quotes every second. The go routine ends when another request comes in. 
+This project aims to use WebSockets for the financial tickers use case. When user browses to the app, a websocket connection is opened to the backend server. The server listens to the "ticker" request from the UI- the connection is kept open. When a ticker request comes in, a go routine is spawned and starts quering Yahoo for the stock quotes every second. The go routine ends when another request comes in and another go routine is started. 
 
 
 
