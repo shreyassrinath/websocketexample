@@ -25,7 +25,7 @@ This project aims to use WebSockets for the financial tickers use case. When use
 
 * Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.html)
 * Clone this repo
-* The Vagrant file install docker and docker-compose for easyily spinning up apps.
+* The Vagrant file install docker and docker-compose for easily spinning up apps.
 
 ### Commands ###
 
