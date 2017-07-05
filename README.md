@@ -1,6 +1,6 @@
 # WebSockets using Angularjs and Go #
 
-Proof of concept project demo working of Websockets using AngularJS (UI) and GO (back end).
+Proof of concept project to showcase working of Websockets using AngularJS (UI) and GO (back end).
 
 ### Description ###
 
